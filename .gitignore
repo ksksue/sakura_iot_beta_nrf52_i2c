@@ -1,3 +1,9 @@
+# Keil
+*.uvguix.*
+JLinkLog.txt
+JLinkSettings.ini
+_build
+
 # Object files
 *.o
 *.ko
