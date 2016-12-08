@@ -53,29 +53,31 @@ enum {
     RES_STATUS_SAKURA_IOT_ERROR_LOCKED      = 0x06,
     RES_STATUS_SAKURA_IOT_ERROR_OVERLAP     = 0x07,
 };
-/*
-typedef union _txrxdata_t {
-    uint8_t byte[18];
-    struct {
-        uint8_t ch;
-        uint8_t type;
-        uint8_t data[8];
-        uint8_t time[8];
-    } data;
-} txrxdata_t;
-*/
 
 typedef struct _txrxdata_t {
-        uint8_t ch;
-        uint8_t type;
-        uint8_t data[8];
-        uint8_t time[8];
+    uint8_t ch;
+    uint8_t type;
+    union {
+        int32_t     i;
+        uint32_t    ui;
+        int64_t     l;
+        uint64_t    ul;
+        float       f;
+        double      d;
+        uint8_t     ar[8];
+    } data;
+    uint8_t time[8];
 } txrxdata_t;
+
+typedef union _date_time_t {
+    uint64_t    time;
+    uint8_t     ar[8];
+} sakura_iot_date_time_t;
 
 void drv_sakura_iot_init(void);
 uint8_t drv_sakura_iot_get_connection_status(void);
 uint8_t drv_sakura_iot_get_signal_quality(void);
-void drv_sakura_iot_get_date_time(uint8_t *date_time);
+void drv_sakura_iot_get_date_time(sakura_iot_date_time_t *date_time);
 uint8_t drv_sakura_iot_echo_back_test(uint8_t data);
 
 void drv_sakura_iot_tx_enqueue(txrxdata_t *data);
@@ -83,5 +85,6 @@ void drv_sakura_iot_tx_queue_send(void);
 void drv_sakura_iot_tx_immediately(txrxdata_t *data);
 
 bool drv_sakura_iot_rx_dequeue(txrxdata_t *data);
+uint8_t drv_sakura_iot_get_rx_queue_length(void);
 
 #endif  // ifndef DRV_SAKURA_IOT_H_

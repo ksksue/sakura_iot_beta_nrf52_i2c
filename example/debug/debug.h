@@ -6,8 +6,16 @@
  *  -DNRF_LOG_USES_RTT="1"  : J-Linkでデバッグログ
  *  -DNRF_LOG_USES_UART="1" : UART経由でデバッグログ
  */
+#define DEBUG_SHOW_RF
+#if ((NRF_LOG_USES_RTT == 1) || (NRF_LOG_USES_UART == 1)) && (defined DEBUG_SHOW_RF)
+    #include "nrf_log.h"
+    #define D_RF_PRINTF( ... )     \
+        NRF_LOG_PRINTF( ## __VA_ARGS__ )
+#else
+    #define D_RF_PRINTF( ... )      ((void)0)
+#endif
 
-#if ((NRF_LOG_USES_RTT == 1) || (NRF_LOG_USES_UART == 1))
+#if ((NRF_LOG_USES_RTT == 1) || (NRF_LOG_USES_UART == 1)) && (defined DEBUG_SHOW)
     #include "nrf_log.h"
     #define DPRINTF( ... )     \
         NRF_LOG_PRINTF( ## __VA_ARGS__ )
@@ -51,6 +59,8 @@
 #else
     #define DPRINTF( ... )          ((void)0)
     #define DPRINTF_8BIT_HEX_ARRAY( ... ) ((void)0)
+    #define DPRINTF_TXDATA( ... )   ((void)0)
+    #define DPRINTF_RXDATA( ... )   ((void)0)
     #define DDPRINTF( fmt, ... )    ((void)0)
     #define DERRPRINTF( fmt, ... )  ((void)0)
     #define DTRACE( fmt, ... )      ((void)0)

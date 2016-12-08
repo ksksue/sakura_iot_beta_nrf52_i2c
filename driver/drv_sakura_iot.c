@@ -71,14 +71,14 @@ uint8_t drv_sakura_iot_get_signal_quality(void)
     return m_rxdata[2];
 }
 
-void drv_sakura_iot_get_date_time(uint8_t *date_time)
+void drv_sakura_iot_get_date_time(sakura_iot_date_time_t *date_time)
 {
     drv_sakura_iot_make_packet(COMM_SAKURA_IOT_GET_DATE_TIME, 0, (void *)0, m_txdata);
 
     DPRINTF_TXDATA(m_txdata, 3);
 
     drv_sakura_iot_i2c_read(3, m_txdata, 11, m_rxdata);
-    memcpy(date_time, &(m_rxdata[2]), 8);
+    memcpy(date_time->ar, &(m_rxdata[2]), 8);
 
     DPRINTF_RXDATA(m_rxdata, 11);
 }
@@ -96,9 +96,25 @@ uint8_t drv_sakura_iot_echo_back_test(uint8_t data)
     return m_rxdata[2];
 }
 
+static void drv_sakura_iot_txdata_alignment(txrxdata_t *txdata, uint8_t *data)
+{
+    memcpy(data, (uint8_t *)txdata, 2);
+    memcpy(data+2, (uint8_t *)&(txdata->data), 8);
+    memcpy(data+10, txdata->time, 8);
+}
+
+static void drv_sakura_iot_rxdata_alignment(uint8_t *data, txrxdata_t *rxdata)
+{
+    memcpy((uint8_t *)rxdata, data, 2);
+    memcpy((uint8_t *)&(rxdata->data), data+2, 8);
+    memcpy(rxdata->time, data+10, 8);
+}
+
 void drv_sakura_iot_tx_enqueue(txrxdata_t *data)
 {
-    drv_sakura_iot_make_packet(COMM_SAKURA_IOT_TX_ENQUEUE, 10, (uint8_t *)data, m_txdata);
+    uint8_t aldata[10];
+    drv_sakura_iot_txdata_alignment(data, aldata);
+    drv_sakura_iot_make_packet(COMM_SAKURA_IOT_TX_ENQUEUE, 10, aldata, m_txdata);
     DPRINTF_TXDATA(m_txdata, 13);
 
     drv_sakura_iot_i2c_read(13, m_txdata, 3, m_rxdata);
@@ -125,7 +141,6 @@ void drv_sakura_iot_tx_immediately(txrxdata_t *data)
     drv_sakura_iot_i2c_read(13, m_txdata, 3, m_rxdata);
 
     DPRINTF_RXDATA(m_rxdata, 3);
-
 }
 
 bool drv_sakura_iot_rx_dequeue(txrxdata_t *data)
@@ -141,6 +156,22 @@ bool drv_sakura_iot_rx_dequeue(txrxdata_t *data)
         return false;
     }
 
-    memcpy((uint8_t *)data, &(m_rxdata[2]), 18);
+    drv_sakura_iot_rxdata_alignment(m_rxdata+2, data);
     return true;
+}
+
+uint8_t drv_sakura_iot_get_rx_queue_length(void)
+{
+    drv_sakura_iot_make_packet(COMM_SAKURA_IOT_GET_RX_QUEUE_LENGTH, 0, (void *)0, m_txdata);
+    DPRINTF_TXDATA(m_txdata, 3);
+
+    drv_sakura_iot_i2c_read(3, m_txdata, 5, m_rxdata);
+
+    DPRINTF_RXDATA(m_rxdata, 5);
+
+    if(m_rxdata[0] != RES_STATUS_SAKURA_IOT_SUCCESS) {
+        return 0;
+    }
+
+    return m_rxdata[3];
 }

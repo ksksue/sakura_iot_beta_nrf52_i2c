@@ -513,19 +513,17 @@ static void buttons_leds_init(bool * p_erase_bonds)
 
 /**@brief Function for placing the application in low power state while waiting for events.
  */
-/*
 static void power_manage(void)
 {
     uint32_t err_code = sd_app_evt_wait();
     APP_ERROR_CHECK(err_code);
 }
-*/
 
 /**@brief Application main function.
  */
 int main(void)
 {
-    uint32_t err_code;
+//    uint32_t err_code;
     bool erase_bonds;
 
 #if (NRF_LOG_USES_RTT == 1) || (NRF_LOG_USES_UART == 1)
@@ -534,7 +532,6 @@ int main(void)
 
     // Initialize.
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
-//    uart_init();
     
     buttons_leds_init(&erase_bonds);
     ble_stack_init();
@@ -543,36 +540,16 @@ int main(void)
     advertising_init();
     conn_params_init();
 
-//    printf("\r\nUART Start!\r\n");
     DPRINTF("Debug Print\n");
-    err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
-    APP_ERROR_CHECK(err_code);
+//    err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+//    APP_ERROR_CHECK(err_code);
 
-    drv_sakura_iot_init();
-
-    txrxdata_t txrxdata;
-    txrxdata.ch = 0;
-    txrxdata.type = 0x69;
-    txrxdata.data[0] = 0x01;
-    txrxdata.data[1] = 0x00;
-    txrxdata.data[2] = 0x00;
-    txrxdata.data[3] = 0x00;
-    txrxdata.data[4] = 0x00;
-    txrxdata.data[5] = 0x00;
-    txrxdata.data[6] = 0x00;
-    txrxdata.data[7] = 0x00;
+    func_test();
 
     // Enter main loop.
     for (;;)
     {
-        DPRINTF("connection status : %02x\n",drv_sakura_iot_get_connection_status());
-        DPRINTF("signal quality : %02x\n", drv_sakura_iot_get_signal_quality());
-        DPRINTF("echo back test : %02x\n", drv_sakura_iot_echo_back_test(0xFF));
-        drv_sakura_iot_tx_enqueue(&txrxdata);
-        drv_sakura_iot_tx_queue_send();
-        txrxdata.data[0]++;
-        nrf_delay_ms(1000);
-//        power_manage();
+        power_manage();
     }
 }
 
