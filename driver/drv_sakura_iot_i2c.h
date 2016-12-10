@@ -30,9 +30,7 @@
     };
 
 typedef void (*drv_sakura_iot_i2c_evt_t)(nrf_drv_twi_evt_t const * p_event, void * p_context);
-
 void drv_sakura_iot_i2c_init(drv_sakura_iot_i2c_evt_t event_handler);
-
-void drv_sakura_iot_i2c_read(uint32_t txlength, uint8_t* txdata, uint32_t rxlength, uint8_t* rxdata);
+void drv_sakura_iot_i2c_read_block(uint32_t txlength, uint8_t* txdata, uint32_t rxlength, uint8_t* rxdata);
 
 #endif  // ifndef DRV_SAKURA_IOT_I2C_H_

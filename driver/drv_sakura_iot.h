@@ -3,56 +3,40 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum {
-    // general commands
-    COMM_SAKURA_IOT_GET_CONNECTION_STATUS       = 0x01,
-    COMM_SAKURA_IOT_GET_SIGNAL_QUALITY          = 0x02,
-    COMM_SAKURA_IOT_GET_DATE_TIME               = 0x03,
-    COMM_SAKURA_IOT_ECHO_BACK_TEST              = 0x0F,
+#define DRV_SAKURA_IOT_RETURN_SUCCESS   (0)
+#define DRV_SAKURA_IOT_RETURN_ERROR     (0xFF)
 
-    // ADC commands
-    COMM_SAKURA_IOT_READ_ADC                    = 0x10,
+typedef enum {
+    DRV_SAKURA_IOT_CONNECTION_STATUS_NO_ERROR                   = 0x00,
+    DRV_SAKURA_IOT_CONNECTION_STATUS_OUT_OF_SIGNAL_AREA         = 0x01,
+    DRV_SAKURA_IOT_CONNECTION_STATUS_CONNECTION_ERROR           = 0x02,
+    DRV_SAKURA_IOT_CONNECTION_STATUS_UNINTENDED_DISCONNECTION   = 0x03,
+} drv_sakura_iot_connection_status;
 
-    // TX commands
-    COMM_SAKURA_IOT_TX_ENQUEUE                  = 0x20,
-    COMM_SAKURA_IOT_TX_IMMEDIATELY              = 0x21,
-    COMM_SAKURA_IOT_GET_TX_QUEUE_LENGTH         = 0x22,
-    COMM_SAKURA_IOT_TX_QUEUE_FLUSH              = 0x23,
-    COMM_SAKURA_IOT_TX_QUEUE_SEND               = 0x24,
-    COMM_SAKURA_IOT_GET_TX_STATUS               = 0x25,
+typedef enum {
+    DRV_SAKURA_IOT_SIGNAL_QUALITY_NO_SERVICE    = 0x00,
+    DRV_SAKURA_IOT_SIGNAL_QUALITY_VERY_WEAK     = 0x01,
+    DRV_SAKURA_IOT_SIGNAL_QUALITY_WEAK          = 0x02,
+    DRV_SAKURA_IOT_SIGNAL_QUALITY_MIDDLE        = 0x03,
+    DRV_SAKURA_IOT_SIGNAL_QUALITY_STRONG        = 0x04,
+    DRV_SAKURA_IOT_SIGNAL_QUALITY_VERY_STRONG   = 0x05,
+} drv_sakura_iot_signal_quality;
 
-    // RX commands
-    COMM_SAKURA_IOT_RX_DEQUEUE                  = 0x30,
-    COMM_SAKURA_IOT_RX_QUEUE_PEEK               = 0x31,
-    COMM_SAKURA_IOT_GET_RX_QUEUE_LENGTH         = 0x32,
-    COMM_SAKURA_IOT_RX_QUEUE_FLUSH              = 0x33,
+typedef enum {
+    DRV_SAKURA_IOT_TX_STATUS_NON            = 0x00,
+    DRV_SAKURA_IOT_TX_STATUS_SENDING        = 0x01,
+    DRV_SAKURA_IOT_TX_STATUS_SENDING_FAILED = 0x02,
+} drv_sakura_iot_tx_status;
 
-    // file download commands
-    COMM_SAKURA_IOT_START_FILE_DOWNLOAD         = 0x40,
-    COMM_SAKURA_IOT_GET_FILE_METADATA           = 0x41,
-    COMM_SAKURA_IOT_GET_FILE_DOWNLOAD_STATUS    = 0x42,
-    COMM_SAKURA_IOT_CANCEL_FILE_DOWNLOAD        = 0x43,
-    COMM_SAKURA_IOT_GET_FILE_DATA               = 0x44,
+typedef enum {
+    DRV_SAKURA_IOT_FIRMWARE_UPDATE_STATUS_NO_ERROR          = 0x00,
+    DRV_SAKURA_IOT_FIRMWARE_UPDATE_STATUS_ALREADY_UPDATED   = 0x01,
+    DRV_SAKURA_IOT_FIRMWARE_UPDATE_STATUS_UPDATE_FAILED     = 0x02,
+    DRV_SAKURA_IOT_FIRMWARE_UPDATE_STATUS_DOWNLOAD_FAILED   = 0x03,
+    DRV_SAKURA_IOT_FIRMWARE_UPDATE_STATUS_VERIFY_FAILED     = 0x04,
+    
+} drv_sakura_iot_firmware_update_status;
 
-    // management commands
-    COMM_SAKURA_IOT_GET_PRODUCT_ID              = 0xA0,
-    COMM_SAKURA_IOT_GET_UNIQUE_ID               = 0xA1,
-    COMM_SAKURA_IOT_GET_FIRMWARE_VERSION        = 0xA2,
-    COMM_SAKURA_IOT_UNLOCK                      = 0xA8,
-    COMM_SAKURA_IOT_FIRMWARE_UPDATE             = 0xA9,
-    COMM_SAKURA_IOT_GET_FIRMWARE_UPDATE_STATUS  = 0xAA,
-    COMM_SAKURA_IOT_SOFTWARE_RESET              = 0xAF,
-};
-
-enum {
-    RES_STATUS_SAKURA_IOT_SUCCESS           = 0x01,
-    RES_STATUS_SAKURA_IOT_ERROR_PARITY      = 0x02,
-    RES_STATUS_SAKURA_IOT_ERROR_UNDEFINED   = 0x03,
-    RES_STATUS_SAKURA_IOT_ERROR_RANGE       = 0x04,
-    RES_STATUS_SAKURA_IOT_ERROR_DONE        = 0x05,
-    RES_STATUS_SAKURA_IOT_ERROR_LOCKED      = 0x06,
-    RES_STATUS_SAKURA_IOT_ERROR_OVERLAP     = 0x07,
-};
 
 typedef struct _txrxdata_t {
     uint8_t ch;
@@ -74,17 +58,81 @@ typedef union _date_time_t {
     uint8_t     ar[8];
 } sakura_iot_date_time_t;
 
+
 void drv_sakura_iot_init(void);
+
+//**********************************************************
+// general commands
+//**********************************************************
 uint8_t drv_sakura_iot_get_connection_status(void);
 uint8_t drv_sakura_iot_get_signal_quality(void);
-void drv_sakura_iot_get_date_time(sakura_iot_date_time_t *date_time);
-uint8_t drv_sakura_iot_echo_back_test(uint8_t data);
+uint8_t drv_sakura_iot_get_date_time(sakura_iot_date_time_t *date_time);
+uint8_t drv_sakura_iot_echo_back_test(uint8_t length, uint8_t *indata, uint8_t *outdata);
 
-void drv_sakura_iot_tx_enqueue(txrxdata_t *data);
-void drv_sakura_iot_tx_queue_send(void);
-void drv_sakura_iot_tx_immediately(txrxdata_t *data);
+//**********************************************************
+// IO commands
+//**********************************************************
+uint8_t drv_sakura_iot_read_adc(uint8_t ch, uint16_t *volt);
 
-bool drv_sakura_iot_rx_dequeue(txrxdata_t *data);
-uint8_t drv_sakura_iot_get_rx_queue_length(void);
+//**********************************************************
+// data tx commands
+//**********************************************************
+uint8_t drv_sakura_iot_tx_enqueue(txrxdata_t *data);
+uint8_t drv_sakura_iot_tx_immediately(txrxdata_t *data);
+uint8_t drv_sakura_iot_tx_available_queue_length(void);
+uint8_t drv_sakura_iot_tx_queued_length(void);
+uint8_t drv_sakura_iot_tx_queue_flush(void);
+uint8_t drv_sakura_iot_tx_queue_send(void);
+uint8_t drv_sakura_iot_get_tx_queue_status(void);
+uint8_t drv_sakura_iot_get_tx_immediately_status(void);
+
+//**********************************************************
+// data rx commands
+//**********************************************************
+uint8_t drv_sakura_iot_rx_dequeue(txrxdata_t *data);
+uint8_t drv_sakura_iot_rx_queue_peek(txrxdata_t *data);
+uint8_t drv_sakura_iot_get_rx_available_queue_length(void);
+uint8_t drv_sakura_iot_get_rx_queued_length(void);
+uint8_t drv_sakura_iot_rx_queue_flush(void);
+
+//**********************************************************
+// file download commands
+//**********************************************************
+/* not supported on the beta version
+typedef struct _metadata_t {
+    uint8_t status;
+    uint8_t size[4];
+    uint8_t time[8];
+    uint8_t check[4];
+} metadata_t;
+
+typedef struct _dl_status_t {
+    uint8_t status;
+    uint8_t size[4];
+} dl_status_t;
+
+typedef struct _dl_data_t {
+    uint32_t size;
+    uint8_t *data;
+} dl_data_t;
+
+uint8_t drv_sakura_iot_start_file_download(void);
+uint8_t drv_sakura_iot_get_file_metadata(metadata_t *data);
+uint8_t drv_sakura_iot_get_file_download_status(dl_status_t *status);
+uint8_t drv_sakura_iot_cancel_file_download(void);
+uint8_t drv_sakura_iot_get_file_data(uint8_t length, uint8_t *data);
+*/
+
+//**********************************************************
+// etc command
+//**********************************************************
+uint8_t drv_sakura_iot_get_product_id(uint8_t *pid);
+uint8_t drv_sakura_iot_get_unique_id(uint8_t *uid);
+uint8_t drv_sakura_iot_get_firmware_version(uint8_t *version);
+uint8_t drv_sakura_iot_unlock(void);
+uint8_t drv_sakura_iot_firmware_update(void);
+uint8_t drv_sakura_iot_get_firmware_update_status(void);
+uint8_t drv_sakura_iot_software_reset(void);
+
 
 #endif  // ifndef DRV_SAKURA_IOT_H_

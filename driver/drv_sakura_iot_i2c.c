@@ -2,6 +2,7 @@
 #include "nrf_delay.h"
 #include "debug.h"
 
+static drv_sakura_iot_i2c_evt_t m_drv_sakura_iot_i2c_event;
 static nrf_drv_twi_t m_i2c = NRF_DRV_TWI_INSTANCE(0);
 static bool m_i2c_init_done = false;
 static bool m_i2c_event_done = false;
@@ -9,6 +10,8 @@ static bool m_i2c_event_done = false;
 static void twi_event_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
 {
     m_i2c_event_done = true;
+   (*m_drv_sakura_iot_i2c_event)(p_event, p_context);
+
 }
 
 static bool wait_event_done(void)
@@ -30,6 +33,7 @@ void drv_sakura_iot_i2c_init(drv_sakura_iot_i2c_evt_t event_handler)
     }
 
     uint32_t err_code;
+    m_drv_sakura_iot_i2c_event = event_handler;
     nrf_drv_twi_config_t i2c_conf = NRF_DRV_TWI_DEFAULT_CONFIG(0);
     i2c_conf.scl = TWI0_CONFIG_SCL;
     i2c_conf.sda = TWI0_CONFIG_SDA;
@@ -41,47 +45,24 @@ void drv_sakura_iot_i2c_init(drv_sakura_iot_i2c_evt_t event_handler)
     m_i2c_event_done = false;
 }
 
-ret_code_t drv_sakura_iot_i2c_write(uint32_t txlength, uint8_t* txdata)
-{
-    if(!m_i2c_init_done) {
-        return 1;
-    }
-
-    nrf_drv_twi_xfer_desc_t xfer_desc = DRV_SAKURA_IOT_I2C_WRITE_DESC(txdata, txlength);
-    return nrf_drv_twi_xfer(&m_i2c, &xfer_desc, 0);
-}
-
-void drv_sakura_iot_i2c_txrx(uint32_t txlength, uint8_t* txdata, uint32_t rxlength, uint8_t* rxdata)
+void drv_sakura_iot_i2c_read_block(uint32_t txlength, uint8_t* txdata, uint32_t rxlength, uint8_t* rxdata)
 {
     ret_code_t err_code;
 
     if(!m_i2c_init_done) {
+        DPRINT_ERR("i2c : no init done\n");
         return;
     }
 
-    nrf_drv_twi_xfer_desc_t desc = DRV_SAKURA_IOT_I2C_READ_DESC(txdata, txlength, rxdata, rxlength);
-
-    err_code = nrf_drv_twi_xfer(&m_i2c, &desc, NRF_DRV_TWI_FLAG_TX_NO_STOP);
-    APP_ERROR_CHECK(err_code);
-
-}
-
-void drv_sakura_iot_i2c_read(uint32_t txlength, uint8_t* txdata, uint32_t rxlength, uint8_t* rxdata)
-{
-    ret_code_t err_code;
-
-    if(!m_i2c_init_done) {
-        return;
-    }
-
+    DPRINTF_TXDATA(txdata, txlength);
     m_i2c_event_done = false;
     err_code = nrf_drv_twi_tx(&m_i2c, DRV_SAKURA_IOT_I2C_SLAVE_ADDR, txdata, txlength, false);
     APP_ERROR_CHECK(err_code);
 
     bool done = wait_event_done();
     if(done==false) {
+        DPRINT_ERR("i2c : no response\n");
         return;
-        DPRINTF("done false\n");
     }
 
     nrf_delay_ms(10);
@@ -90,4 +71,5 @@ void drv_sakura_iot_i2c_read(uint32_t txlength, uint8_t* txdata, uint32_t rxleng
     err_code = nrf_drv_twi_rx(&m_i2c, DRV_SAKURA_IOT_I2C_SLAVE_ADDR, rxdata, rxlength);
     APP_ERROR_CHECK(err_code);
     wait_event_done();
+    DPRINTF_RXDATA(rxdata, rxlength);
 }
