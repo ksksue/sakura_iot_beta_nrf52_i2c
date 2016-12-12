@@ -8,6 +8,7 @@
  */
 
 #define DEBUG_SHOW_RF
+#define DEBUG_SHOW_FUNC_TEST
 #define DEBUG_SHOW_ERR
 #define DEBUG_SHOW
 
@@ -20,6 +21,13 @@
     #else
         #define D_RF_PRINTF( ... )      ((void)0)
     #endif // End of defined DEBUG_SHOW_RF
+
+    #if defined DEBUG_SHOW_FUNC_TEST
+        #define DPRINT_FUNC_TEST( fmt, ... )     \
+            NRF_LOG_PRINTF("%s # " fmt , __func__, ## __VA_ARGS__ )
+    #else
+        #define DPRINT_FUNC_TEST( ... ) ((void)0)
+    #endif // End of defined DEBUG_SHOW_ERR
 
 
     #if defined DEBUG_SHOW_ERR
